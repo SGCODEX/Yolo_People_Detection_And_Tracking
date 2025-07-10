@@ -1,5 +1,7 @@
+streamlit
+opencv-python-headless
 ultralytics
 numpy
 matplotlib
 Pillow
-opencv-python-headless
+ffmpeg-python
