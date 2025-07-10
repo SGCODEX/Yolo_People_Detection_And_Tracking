@@ -169,7 +169,7 @@ if uploaded_file:
     # Optional video preview
     if show_live_preview:
         st.markdown("### ⭐Video Area")
-        progress_bar = st.progress(0)
+        #progress_bar = st.progress(0)
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 🎥 Original")
@@ -178,7 +178,7 @@ if uploaded_file:
             st.markdown("### 🧠 Annotated")
             annotated_placeholder = st.empty()
 
-    #progress_bar = st.progress(0)
+    progress_bar = st.progress(0)
 
     # Spinner placeholder for heatmap section
     st.markdown("---")
