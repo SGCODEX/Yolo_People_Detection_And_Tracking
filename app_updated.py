@@ -289,7 +289,7 @@ if uploaded_file:
 
     fig, ax = plt.subplots()
     ax.imshow(heatmap, cmap='hot', interpolation='nearest')
-    ax.set_title("🔥 ROI Heatmap (People Density)")
+    ax.set_title("ROI Heatmap (People Density)")
     ax.axis('off')
     spinner_placeholder.empty()  # remove spinner
     heatmap_placeholder.pyplot(fig)
