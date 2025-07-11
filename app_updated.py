@@ -111,23 +111,30 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 style='color:#7B61FF;'>👁️ Drishti Access's People Detection with ROI, KPIs, and Heatmap 🔍</h1>", unsafe_allow_html=True)
-st.markdown("### Real-Time People Detection & ROI Heatmap Intelligence")
+st.markdown("<h2 style='color:#7B61FF;'>👁️ Drishti Access: Intelligent Crowd Monitoring 🔍</h2>", unsafe_allow_html=True)
+st.markdown("##### AI-powered Real-Time People Detection in ROI, Risk Alerts, Live KPIs and Heatmap Generation")
+
 #st.title("👁️‍🗨️ People Detection with ROI, KPIs, and Heatmap")
 #st.write("Upload a video to detect people inside/outside ROI, monitor crowd status, and visualize heatmap.")
 
 uploaded_file = st.file_uploader("Upload an MP4 video", type=["mp4"])
 
 # Sidebar for ROI and threshold settings
-st.sidebar.title("🧮 ROI and Alert Settings")
-roi_left = st.sidebar.slider("ROI Left (%)", 0, 100, 20)
-roi_top = st.sidebar.slider("ROI Top (%)", 0, 100, 20)
-roi_right = st.sidebar.slider("ROI Right (%)", 0, 100, 80)
-roi_bottom = st.sidebar.slider("ROI Bottom (%)", 0, 100, 80)
-alert_threshold = st.sidebar.slider("Overcrowd Threshold (people)", 1, 50, 7)
 
 # Option to toggle live preview
-show_live_preview = st.sidebar.toggle("Show Live Video Preview", value=True)
+#st.sidebar.title("🧮 Video Preview")
+st.sidebar.write('(Configure these settings before using the app)')
+st.sidebar.header('📺 Video Setting')
+show_live_preview = st.sidebar.toggle("Show / Hide Preview", value=True)
+st.sidebar.header('👥 Threshold Setting')
+alert_threshold = st.sidebar.slider("Overcrowd Threshold (people)", 1, 50, 7)
+st.sidebar.header('🧮 ROI Settings')
+roi_left = st.sidebar.slider("ROI Left (%)", 0, 100, 20)
+roi_right = st.sidebar.slider("ROI Right (%)", 0, 100, 80)
+roi_top = st.sidebar.slider("ROI Top (%)", 0, 100, 20)
+roi_bottom = st.sidebar.slider("ROI Bottom (%)", 0, 100, 80)
+st.sidebar.write('- ROI = Region of Interest (Yellow BBox)')
+st.sidebar.write('- BBox = Bounding Box')
 
 if uploaded_file:
     # Save uploaded file
@@ -155,12 +162,15 @@ if uploaded_file:
     out = cv2.VideoWriter(output_path, fourcc, fps, (W, H))
 
     # KPI Layout
-    st.markdown("### ⭐KPIs")
-    kpi_col1, kpi_col2 = st.columns(2)
+    st.markdown("#### ⭐KPIs")
+    kpi_col1, kpi_col2, kpi_col3= st.columns(3)
     with kpi_col1:
-        inside_kpi_box = st.empty()
+        outside_kpi_box = st.empty()
         #inside_kpi = st.empty()
     with kpi_col2:
+        inside_kpi_box = st.empty()
+        #inside_kpi = st.empty()
+    with kpi_col3:
         status_kpi_box = st.empty()
         #status_kpi = st.empty()
 
@@ -168,14 +178,14 @@ if uploaded_file:
 
     # Optional video preview
     if show_live_preview:
-        st.markdown("### ⭐Video Area")
+        st.markdown("#### ⭐Video Area")
         #progress_bar = st.progress(0)
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("### 🎥 Original")
+            st.markdown("#### 🎥 Original")
             original_placeholder = st.empty()
         with col2:
-            st.markdown("### 🧠 Annotated")
+            st.markdown("#### 🧠 Annotated")
             annotated_placeholder = st.empty()
 
     progress_bar = st.progress(0)
@@ -195,6 +205,8 @@ if uploaded_file:
         ret, frame = cap.read()
         if not ret:
             break
+
+        original_frame = frame.copy()  # 🔧 Save unmodified version before drawing
 
         results = model(frame, verbose=False)[0]
         inside, outside = 0, 0
@@ -219,7 +231,7 @@ if uploaded_file:
             cv2.circle(frame, (cx, cy), 4, color, -1)
 
         # Draw ROI box
-        cv2.rectangle(frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (255, 255, 0), 2)
+        cv2.rectangle(frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 12)
         cv2.putText(frame, f"Inside ROI: {inside}", (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
         cv2.putText(frame, f"Outside ROI: {outside}", (30, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 255), 3)
 
@@ -227,22 +239,32 @@ if uploaded_file:
         frame_idx += 1
         progress_bar.progress(min(frame_idx / total_frames, 1.0))
 
+        # ✅ Show toast if overcrowding is detected
+        if inside > alert_threshold:
+            st.toast("Alert: Overcrowding detected!", icon="🚨")
+
         # Update KPIs every second
         # In update loop:
+        outside_kpi_box.markdown(f"""
+            <div class="kpi-box">
+                <div class="kpi-title">👩‍👩‍👧‍👦 Outside ROI (Red BBox)</div>
+                <div class="kpi-value">{outside}</div>
+            </div>
+        """, unsafe_allow_html=True)    
 
         inside_kpi_box.markdown(f"""
             <div class="kpi-box">
-                <div class="kpi-title">👥 Inside ROI</div>
+                <div class="kpi-title">👥 Inside ROI (Green BBox)</div>
                 <div class="kpi-value">{inside}</div>
             </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)    
 
         status_text = "✅ Safe" if inside <= alert_threshold else "❌ Overcrowded"
         status_color = "green" if inside <= alert_threshold else "red"
 
         status_kpi_box.markdown(f"""
             <div class="kpi-box">
-                <div class="kpi-title">📊 ROI Status</div>
+                <div class="kpi-title">📊 ROI Status (Threshold = {alert_threshold})</div>
                 <div class="kpi-value {status_color}">{status_text}</div>
             </div>
         """, unsafe_allow_html=True)
@@ -252,10 +274,12 @@ if uploaded_file:
 
         # Optional display of frames
         if show_live_preview:
-            display_annotated = cv2.resize(frame, (720, int(720 * H / W)))
-            frame_disp = cv2.resize(frame.copy(), (720, int(720 * H / W)))
-            original_placeholder.image(frame_disp, channels="BGR")
-            annotated_placeholder.image(display_annotated, channels="BGR")
+            original_resized = cv2.resize(original_frame, (720, int(720 * H / W)))
+            annotated_resized = cv2.resize(frame, (720, int(720 * H / W)))
+
+            original_placeholder.image(original_resized, channels="BGR")
+            annotated_placeholder.image(annotated_resized, channels="BGR")
+
 
     cap.release()
     out.release()
